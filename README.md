@@ -3,9 +3,11 @@
 Codex-style "appshots" for **OpenCode Desktop on macOS**: attach a screenshot **and the readable
 text** of any other app's window to your next prompt.
 
-- **Appshot pill** above the composer → pick a window from the list → the PNG and its text get attached.
+- **Appshot pill** above the composer → pick a window from the list → its screenshot gets attached.
+  Turn on **Include window text** in the same menu to also attach the window's Accessibility text.
 - **`/appshot`** → attaches the front-most other window (the app you just came from).
   `/appshot safari` → the first window whose app or title matches.
+  `/appshot --text safari` → the same, with the window's text.
 
 > Uses the experimental Desktop GUI plugin API (OpenCode ≥ 2.2). Plugins can't add items to the
 > composer's **+** menu yet, so this uses a composer pill plus a slash command (see "Upstream" below).
@@ -27,7 +29,8 @@ composer.attach(file/quote) ◀───  writes $TMPDIR/opencode-appshot/ ◀�
    It sets `AXManualAccessibility` so Chrome and Electron apps expose their tree.
 4. Files go to `$TMPDIR/opencode-appshot/`, like Codex's pasted images, so nothing lands in your project.
    OpenCode copies the image into the message when it's sent, and macOS clears old temp files on its own.
-   The PNG is always attached. If the text is short, it's added as a quote. If it's long, the `.md` file is attached instead.
+   The PNG is always attached. The text is read only when asked for (`--no-text` skips the walk otherwise).
+   If it's short, it's added as a quote. If it's long, the `.md` file is attached instead.
 
 ## Build & install (on a Mac)
 
@@ -65,7 +68,7 @@ After granting Screen Recording, restart OpenCode.
 | Permission        | Needed for                                  |
 |-------------------|---------------------------------------------|
 | Screen Recording  | the screenshot, and window titles in the list |
-| Accessibility     | the window text (optional, image-only without it) |
+| Accessibility     | the window text (only with **Include window text** or `--text`) |
 
 ## v1 checklist — verify first
 
@@ -82,8 +85,6 @@ After granting Screen Recording, restart OpenCode.
   only draws thumbnails for files stored inline (`source.type: "inline"`, as a pasted image is).
   `composer.attach` takes a file path, so the file is stored as a `file://` URI and gets no
   thumbnail. The plugin API has no way to attach an inline image yet; this needs an upstream change.
-- Electron apps such as VS Code expose little Accessibility text unless their screen-reader mode is on,
-  so captures of them are often image-only.
 - `screencapture` subprocess → ScreenCaptureKit (`SCScreenshotManager`) for better speed and control.
 - AX text is plain and heuristic. Some apps (games, canvas UIs, some Java apps) expose little or no text.
 - Captured text is untrusted content: it's attached as a *quote* so the model treats it as

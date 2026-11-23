@@ -101,7 +101,7 @@ function slug(s: string): string {
   )
 }
 
-export async function capture(win: WindowEntry): Promise<Shot> {
+export async function capture(win: WindowEntry, withText: boolean): Promise<Shot> {
   const path = await import("node:path")
   const fs = await import("node:fs/promises")
   const os = await import("node:os")
@@ -121,6 +121,7 @@ export async function capture(win: WindowEntry): Promise<Shot> {
     "--title", win.title,
     "--frame", `${win.x},${win.y},${win.width},${win.height}`,
     "--out", imagePath,
+    ...(withText ? [] : ["--no-text"]),
   ])
 
   let textPath: string | undefined

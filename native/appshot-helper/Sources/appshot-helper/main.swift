@@ -2,7 +2,7 @@
 //
 //   appshot-helper list [--exclude-pid <pid>]
 //   appshot-helper permissions [--prompt]
-//   appshot-helper capture --window-id <id> --pid <pid> [--title <t>] [--frame x,y,w,h] --out <png>
+//   appshot-helper capture --window-id <id> --pid <pid> [--title <t>] [--frame x,y,w,h] [--no-text] --out <png>
 //
 // Every command prints one JSON document on stdout. Errors go to stderr with exit code 1.
 // macOS attributes Screen Recording / Accessibility to the app that spawned us (OpenCode),
@@ -224,7 +224,12 @@ case "capture":
         target = CGRect(x: f[0], y: f[1], width: f[2], height: f[3])
     }
     screenshot(windowId: id, to: out)
-    emit(windowText(pid: pid, title: option("--title") ?? "", frame: target))
+    if flag("--no-text") {
+        // Image only: skip the Accessibility walk, keep the JSON shape.
+        emit(TextResult(text: "", truncated: false, matched: false))
+    } else {
+        emit(windowText(pid: pid, title: option("--title") ?? "", frame: target))
+    }
 
 default:
     fail("usage: appshot-helper list|permissions|capture …")

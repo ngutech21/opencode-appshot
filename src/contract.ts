@@ -39,7 +39,11 @@ export const Appshot = Ipc.define({
   methods: {
     listWindows: { output: Schema.Array(WindowEntry) },
     capture: {
-      input: Schema.Struct({ window: WindowEntry }),
+      input: Schema.Struct({
+        window: WindowEntry,
+        /** Also read the window's Accessibility text. */
+        text: Schema.Boolean,
+      }),
       output: Shot,
     },
     permissions: { output: Permissions },

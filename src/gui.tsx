@@ -12,6 +12,8 @@ export default Plugin.define({
     const [perms, setPerms] = createSignal<Permissions>()
     const [busy, setBusy] = createSignal(false)
     const [error, setError] = createSignal<string>()
+    // Image only by default; the window's Accessibility text is one click away in the menu.
+    const [withText, setWithText] = createSignal(false)
 
     const refresh = async () => {
       try {
@@ -30,12 +32,12 @@ export default Plugin.define({
     const onFocus = () => void refresh()
     window.addEventListener("focus", onFocus)
 
-    async function shoot(win: WindowEntry) {
+    async function shoot(win: WindowEntry, text = withText()) {
       const screen = ctx.screen.current()
       if (!screen || !ctx.sessions.current()) return
       setBusy(true)
       try {
-        const shot = await api.capture({ window: win })
+        const shot = await api.capture({ window: win, text })
         const composer = screen.composer
         composer.attach({ type: "file", path: shot.imagePath, preview: `${win.app} screenshot` })
         if (shot.text && composer.quotable()) {
@@ -67,7 +69,8 @@ export default Plugin.define({
         const p = perms()
         const rows: ComposerPillRow[] = []
 
-        if (p && (!p.screenRecording || !p.accessibility)) {
+        // Accessibility only matters once the user asks for window text.
+        if (p && (!p.screenRecording || (withText() && !p.accessibility))) {
           rows.push({
             id: "permissions",
             label: !p.screenRecording ? "Grant Screen Recording…" : "Grant Accessibility (for window text)…",
@@ -76,6 +79,13 @@ export default Plugin.define({
             run: () => void api.requestPermissions().then(setPerms),
           })
         }
+        rows.push({
+          id: "text",
+          label: "Include window text",
+          icon: "outline-text",
+          detail: withText() ? "On" : "Off",
+          run: () => setWithText((on) => !on),
+        })
         for (const win of windows().slice(0, MAX_ROWS)) {
           rows.push({
             id: `w${win.id}`,
@@ -101,18 +111,21 @@ export default Plugin.define({
     ctx.add(Command, (): Command => ({
       id: "attach",
       title: "Appshot: attach a window",
-      description: "Screenshot and text of another app's window",
+      description: "Screenshot of another app's window; add --text for its text too",
       keywords: "screenshot window capture appshot",
       section: "prompt",
       slash: { name: "appshot", arguments: true },
       enabled: !!ctx.sessions.current(),
       run: async (input) => {
         await refresh()
-        const q = (input ?? "").trim().toLowerCase()
+        // "--text" anywhere in the argument also attaches the window's text.
+        const raw = (input ?? "").trim()
+        const text = /(^|\s)--text(\s|$)/.test(raw)
+        const q = raw.replace(/(^|\s)--text(?=\s|$)/g, " ").trim().toLowerCase()
         const list = windows()
         // No argument: the front-most other window, i.e. the app you just came from.
         const win = q ? list.find((w) => label(w).toLowerCase().includes(q)) : list[0]
-        if (win) await shoot(win)
+        if (win) await shoot(win, text || withText())
         else setError(q ? `No window matches "${q}"` : "No other windows on screen")
       },
     }))
@@ -124,7 +137,7 @@ export default Plugin.define({
     helper.init(ctx)
     ctx.provide(Appshot, {
       listWindows: () => helper.listWindows(process.pid),
-      capture: ({ window }) => helper.capture(window),
+      capture: ({ window, text }) => helper.capture(window, text),
       permissions: () => helper.permissions(false),
       requestPermissions: () => helper.permissions(true),
     })
