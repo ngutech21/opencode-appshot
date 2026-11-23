@@ -49,7 +49,7 @@ jobs:
         run: |
           file bin/appshot-helper
           lipo bin/appshot-helper -verify_arch arm64 x86_64
-          # No TCC grants on the runner: expect valid JSON with both permissions false.
+          # Runners come with TCC pre-granted, so only check the JSON shape.
           bin/appshot-helper permissions | tee /dev/stderr | node -e '
             const p = JSON.parse(require("fs").readFileSync(0, "utf8"));
             if (typeof p.screenRecording !== "boolean" || typeof p.accessibility !== "boolean") process.exit(1);
