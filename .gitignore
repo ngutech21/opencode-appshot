@@ -1,0 +1,5 @@
+node_modules
+dist
+bin
+native/appshot-helper/.build
+.opencode/appshots/
