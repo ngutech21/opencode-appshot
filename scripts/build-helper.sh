@@ -8,8 +8,11 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 1
 fi
 
-swift build -c release --arch arm64 --arch x86_64 --package-path native/appshot-helper
+args=(-c release --arch arm64 --arch x86_64 --package-path native/appshot-helper)
+swift build "${args[@]}"
+# The output dir differs between Swift versions (.build/apple vs .build/out), so ask.
+bin_path="$(swift build "${args[@]}" --show-bin-path)"
 mkdir -p bin
-cp native/appshot-helper/.build/apple/Products/Release/appshot-helper bin/appshot-helper
+cp "$bin_path/appshot-helper" bin/appshot-helper
 codesign --force --sign - bin/appshot-helper
 lipo -info bin/appshot-helper
