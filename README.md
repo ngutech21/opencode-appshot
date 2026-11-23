@@ -77,9 +77,10 @@ After granting Screen Recording, restart OpenCode.
 
 ## Known limitations / v2 ideas
 
-- The sent message's bubble shows no thumbnail for the capture. The image does reach the model, but
-  OpenCode only renders attachments listed in the message's `metadata.attachments`, which a plugin's
-  `composer.attach` doesn't fill. This needs an upstream change.
+- The sent message shows no thumbnail for the capture. The image does reach the model, but OpenCode
+  only draws thumbnails for files stored inline (`source.type: "inline"`, as a pasted image is).
+  `composer.attach` takes a workspace path, so the file is stored as a `file://` URI and gets no
+  thumbnail. The plugin API has no way to attach an inline image yet; this needs an upstream change.
 - Electron apps such as VS Code expose little Accessibility text unless their screen-reader mode is on,
   so captures of them are often image-only.
 - `screencapture` subprocess → ScreenCaptureKit (`SCScreenshotManager`) for better speed and control.
@@ -103,3 +104,28 @@ There's no `MenuItem` menu for the composer's **+** attach menu yet. The SDK onl
 > Example plugin: opencode-appshot.
 
 Once that exists, the pill becomes one `ctx.add(MenuItem, …)` call that opens the same window list.
+
+Images attached by a plugin get no thumbnail in the sent message. Proposed issue for opencode:
+
+> **Sent messages show no thumbnail for images attached with `composer.attach`**
+>
+> **What happens:** A GUI plugin attaches a workspace PNG with
+> `composer.attach({ type: "file", path: ".opencode/appshots/shot.png" })`. The model receives it as
+> an image: the stored message has a `files` entry with `mime: "image/jpeg"` and
+> `source: { type: "uri", uri: "file:///…/shot.png" }`. But the user's bubble in the timeline
+> shows only the text, no image.
+>
+> **Expected:** The same thumbnail a pasted image gets. A pasted image is stored with
+> `source: { type: "inline" }` and is shown above the bubble.
+>
+> **Why it matters:** Users can't see what was sent, so they can't tell whether a screenshot
+> was attached or which window it showed.
+>
+> **Possible fixes (either works):**
+> 1. Render image `files` with a `uri` source like inline ones, loading them through the
+>    server's file URL as the file viewer already does for images.
+> 2. Let `ComposerFile` (or a new `ComposerImage` part) take inline bytes, e.g.
+>    `{ type: "image", data: Uint8Array, mime: "image/png", name }`, stored as a pasted image is.
+>
+> **Versions:** OpenCode Desktop 2.4.x, `@opencode/plugin` 2.4.1, macOS.
+> Example plugin: opencode-appshot.
