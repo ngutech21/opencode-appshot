@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast and cheap: typecheck and bundle the GUI part on Linux.
+  check:
+    name: Typecheck & bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # version comes from package.json "packageManager"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build:gui
+
+  # The Swift helper needs macOS + Xcode. macOS minutes cost more, so this job
+  # only runs once the cheap checks pass.
+  package:
+    name: Build helper & package
+    needs: check
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: Smoke-test helper
+        run: |
+          file bin/appshot-helper
+          lipo bin/appshot-helper -verify_arch arm64 x86_64
+          # No TCC grants on the runner: expect valid JSON with both permissions false.
+          bin/appshot-helper permissions | tee /dev/stderr | node -e '
+            const p = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            if (typeof p.screenRecording !== "boolean" || typeof p.accessibility !== "boolean") process.exit(1);
+          '
+          bin/appshot-helper list | node -e 'if (!Array.isArray(JSON.parse(require("fs").readFileSync(0, "utf8")))) process.exit(1)'
+
+      - name: Pack
+        run: |
+          mkdir -p out
+          pnpm pack --pack-destination out
+          tar -tzf out/*.tgz
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: opencode-appshot
+          path: out/*.tgz
+          if-no-files-found: error
