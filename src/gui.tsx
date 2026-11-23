@@ -122,6 +122,7 @@ export default Plugin.define({
   },
 
   main(ctx) {
+    helper.init(ctx)
     ctx.provide(Appshot, {
       listWindows: () => helper.listWindows(process.pid),
       capture: ({ window, directory }) => helper.capture(window, directory),

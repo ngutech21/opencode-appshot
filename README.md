@@ -46,6 +46,15 @@ Then add the plugin to `~/.config/opencode/opencode.json` (the desktop app only 
 
 Restart OpenCode Desktop. Check **Settings → Extensions → Plugins**.
 
+The plugin finds `bin/appshot-helper` through the plugin's install location. If the pill reports
+`appshot-helper not found`, point it at the binary yourself:
+
+```jsonc
+{
+  "plugins": [{ "package": "/absolute/path/to/opencode-appshot", "options": { "helperPath": "/absolute/path/to/opencode-appshot/bin/appshot-helper" } }]
+}
+```
+
 ### Permissions
 
 On the first run, open the pill and pick **Grant Screen Recording…** and then **Grant Accessibility…**.
