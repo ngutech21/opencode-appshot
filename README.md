@@ -40,7 +40,7 @@ Then add the plugin to `~/.config/opencode/opencode.json` (the desktop app only 
 
 ```jsonc
 {
-  "plugin": ["/absolute/path/to/opencode-appshot"]
+  "plugins": ["/absolute/path/to/opencode-appshot"]
 }
 ```
 
@@ -68,17 +68,20 @@ After granting Screen Recording, restart OpenCode.
 
 ## v1 checklist — verify first
 
-- [ ] **Does the model see the attached PNG as an image?** `ComposerFile` is documented as a
-      workspace file part, and nothing says images are supported. If OpenCode only sends text for
-      file parts, image delivery needs another route. One option is a server-plugin part that turns the
-      PNG into an image message part. Test this before anything else.
-- [ ] The relative `imagePath` resolves in `composer.attach`. If not, try an absolute path.
-- [ ] Local-path entry in `plugin` loads the GUI part (otherwise `pnpm pack` and install the tarball).
+- [x] **Does the model see the attached PNG as an image?** Yes. OpenCode inlines the workspace PNG
+      into the message's `files` as `image/jpeg`, and a vision-capable model describes its pixels.
+- [x] The relative `imagePath` resolves in `composer.attach`.
+- [x] Local-path entry in `plugins` loads the GUI part.
 - [ ] Icon names (`photo`, `outline-photo`, `outline-text`) render as expected.
-- [ ] TCC prompts are attributed to OpenCode when the helper is spawned from Electron's main process.
+- [x] TCC prompts are attributed to OpenCode when the helper is spawned from Electron's main process.
 
 ## Known limitations / v2 ideas
 
+- The sent message's bubble shows no thumbnail for the capture. The image does reach the model, but
+  OpenCode only renders attachments listed in the message's `metadata.attachments`, which a plugin's
+  `composer.attach` doesn't fill. This needs an upstream change.
+- Electron apps such as VS Code expose little Accessibility text unless their screen-reader mode is on,
+  so captures of them are often image-only.
 - `screencapture` subprocess → ScreenCaptureKit (`SCScreenshotManager`) for better speed and control.
 - AX text is plain and heuristic. Some apps (games, canvas UIs, some Java apps) expose little or no text.
 - Captured text is untrusted content: it's attached as a *quote* so the model treats it as
