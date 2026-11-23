@@ -38,6 +38,11 @@ Run `pnpm typecheck && pnpm build:gui` before every commit that touches `src/`.
 - The GUI plugin API is **experimental**: check `node_modules/@opencode/plugin/dist/gui/*.d.ts` for the
   real shapes before using an API. Don't rely on memory.
 - The helper's stdout is a JSON contract with `src/helper.ts`. Change both sides together.
+- **Pin every GitHub Action to a full commit SHA**, with the exact version as a trailing comment:
+  `uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`. Never use a tag or
+  branch. Dependabot updates the SHA and the comment together. Tool versions that an action
+  downloads get pinned too, for example actionlint's `version:`.
+- CI runs actionlint, with shellcheck on `run:` blocks. Check workflows locally with `actionlint` before pushing.
 
 ## Commits
 
