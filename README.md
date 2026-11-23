@@ -31,8 +31,8 @@ composer.attach(file/quote) ◀───  writes .opencode/appshots/   ◀──
 ## Build & install (on a Mac)
 
 ```sh
-npm install
-npm run build          # universal Swift helper → bin/, plugin bundle → dist/
+pnpm install
+pnpm build             # universal Swift helper → bin/, plugin bundle → dist/
 ```
 
 Then add the plugin to `~/.config/opencode/opencode.json` (the desktop app only reads plugins from
@@ -64,7 +64,7 @@ After granting Screen Recording, restart OpenCode.
       file parts, image delivery needs another route. One option is a server-plugin part that turns the
       PNG into an image message part. Test this before anything else.
 - [ ] The relative `imagePath` resolves in `composer.attach`. If not, try an absolute path.
-- [ ] Local-path entry in `plugin` loads the GUI part (otherwise `npm pack` and install the tarball).
+- [ ] Local-path entry in `plugin` loads the GUI part (otherwise `pnpm pack` and install the tarball).
 - [ ] Icon names (`photo`, `outline-photo`, `outline-text`) render as expected.
 - [ ] TCC prompts are attributed to OpenCode when the helper is spawned from Electron's main process.
 
