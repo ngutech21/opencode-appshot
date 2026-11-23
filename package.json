@@ -4,7 +4,7 @@
   "description": "Attach a screenshot and the readable text of any macOS app window to the OpenCode Desktop composer.",
   "type": "module",
   "license": "MIT",
-  "packageManager": "pnpm@10.34.9",
+  "packageManager": "pnpm@12.23.0",
   "os": [
     "darwin"
   ],
@@ -40,10 +40,5 @@
     "typescript": "^6.0.3",
     "vite": "^8.3.8",
     "vite-plugin-solid": "^2.11.17"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
   }
 }
