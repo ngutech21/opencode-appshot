@@ -105,27 +105,39 @@ There's no `MenuItem` menu for the composer's **+** attach menu yet. The SDK onl
 
 Once that exists, the pill becomes one `ctx.add(MenuItem, …)` call that opens the same window list.
 
-Images attached by a plugin get no thumbnail in the sent message. Proposed issue for opencode:
+Images attached by a plugin get no thumbnail in the sent message. This is tracked upstream in
+[anomalyco/opencode#61229](https://github.com/anomalyco/opencode/issues/61229) (path-based images
+show filename cards in sent messages). Draft comment for that issue, adding the plugin case:
 
-> **Sent messages show no thumbnail for images attached with `composer.attach`**
+> Adding a related case from a GUI plugin, on OpenCode Desktop 2.4.x (macOS), `@opencode/plugin` 2.4.1.
 >
-> **What happens:** A GUI plugin attaches a workspace PNG with
-> `composer.attach({ type: "file", path: ".opencode/appshots/shot.png" })`. The model receives it as
-> an image: the stored message has a `files` entry with `mime: "image/jpeg"` and
-> `source: { type: "uri", uri: "file:///…/shot.png" }`. But the user's bubble in the timeline
-> shows only the text, no image.
+> A plugin that attaches a workspace image with `composer.attach` gets an even weaker result than
+> the filename card described here: the sent message shows **nothing**, neither a thumbnail nor a card.
 >
-> **Expected:** The same thumbnail a pasted image gets. A pasted image is stored with
-> `source: { type: "inline" }` and is shown above the bubble.
+> ```ts
+> screen.composer.attach({ type: "file", path: ".opencode/appshots/shot.png" })
+> ```
 >
-> **Why it matters:** Users can't see what was sent, so they can't tell whether a screenshot
-> was attached or which window it showed.
+> The model does receive the image. The stored message has it in `files`, but `metadata.attachments`
+> stays empty, so there's nothing for the timeline to render:
 >
-> **Possible fixes (either works):**
-> 1. Render image `files` with a `uri` source like inline ones, loading them through the
->    server's file URL as the file viewer already does for images.
-> 2. Let `ComposerFile` (or a new `ComposerImage` part) take inline bytes, e.g.
->    `{ type: "image", data: Uint8Array, mime: "image/png", name }`, stored as a pasted image is.
+> ```jsonc
+> "metadata": { "attachments": [], "comments": [] },
+> "files": [{
+>   "mime": "image/jpeg",
+>   "name": "shot.png",
+>   "source": { "type": "uri", "uri": "file:///…/.opencode/appshots/shot.png" },
+>   "data": "…"
+> }]
+> ```
 >
-> **Versions:** OpenCode Desktop 2.4.x, `@opencode/plugin` 2.4.1, macOS.
-> Example plugin: opencode-appshot.
+> For comparison, an image pasted into the same composer is stored with `source: { "type": "inline" }`
+> and gets a thumbnail.
+>
+> When this gets picked up, could the fix render image entries from `files` (not only
+> `metadata.attachments`)? That would cover plugin-attached images too. Alternatively, a way for
+> `composer.attach` to add an image the way a paste does (inline bytes) would let plugins
+> opt into the thumbnail themselves.
+>
+> Use case: a plugin that attaches a screenshot of another app's window. Without the thumbnail,
+> users can't tell from the timeline whether a screenshot was sent or which window it showed.
