@@ -12,6 +12,7 @@ import AppKit
 import ApplicationServices
 import CoreGraphics
 import Foundation
+import ImageIO
 
 // MARK: - Output
 
@@ -113,6 +114,33 @@ func screenshot(windowId: Int, to path: String) {
     guard p.terminationStatus == 0, FileManager.default.fileExists(atPath: path) else {
         fail("screencapture failed (status \(p.terminationStatus)). Is Screen Recording granted to OpenCode?")
     }
+}
+
+/// Longest side of an attached screenshot, in pixels. Vision models scale larger images down
+/// to about this size anyway, so the extra Retina pixels only cost tokens and upload time.
+let maxImageSide = 1568
+
+/// Shrinks the PNG at `path` in place so its longest side is at most `maxSide` pixels.
+/// Images that already fit are left untouched.
+func downscale(_ path: String, maxSide: Int) {
+    let url = URL(fileURLWithPath: path) as CFURL
+    guard maxSide > 0,
+          let src = CGImageSourceCreateWithURL(url, nil),
+          let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any],
+          let w = props[kCGImagePropertyPixelWidth] as? Int,
+          let h = props[kCGImagePropertyPixelHeight] as? Int,
+          max(w, h) > maxSide else { return }
+    let opts: [CFString: Any] = [
+        kCGImageSourceCreateThumbnailFromImageAlways: true,
+        kCGImageSourceThumbnailMaxPixelSize: maxSide,
+        kCGImageSourceCreateThumbnailWithTransform: true,
+    ]
+    guard let small = CGImageSourceCreateThumbnailAtIndex(src, 0, opts as CFDictionary),
+          let dst = CGImageDestinationCreateWithURL(url, "public.png" as CFString, 1, nil) else {
+        fail("could not shrink the screenshot")
+    }
+    CGImageDestinationAddImage(dst, small, nil)
+    guard CGImageDestinationFinalize(dst) else { fail("could not write the shrunk screenshot") }
 }
 
 // MARK: - Accessibility text
@@ -224,6 +252,7 @@ case "capture":
         target = CGRect(x: f[0], y: f[1], width: f[2], height: f[3])
     }
     screenshot(windowId: id, to: out)
+    downscale(out, maxSide: maxImageSide)
     if flag("--no-text") {
         // Image only: skip the Accessibility walk, keep the JSON shape.
         emit(TextResult(text: "", truncated: false, matched: false))

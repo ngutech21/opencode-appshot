@@ -24,6 +24,8 @@ composer.attach(file/quote) ◀───  writes $TMPDIR/opencode-appshot/ ◀�
 1. The window list comes from `CGWindowListCopyWindowInfo`, refreshed whenever OpenCode regains focus.
    OpenCode's own windows are filtered out.
 2. `screencapture -l <windowID>` grabs the window, even when other windows partly cover it.
+   The helper then shrinks it so its longest side is at most 1568 px. Vision models scale larger
+   images down anyway, so full Retina captures only cost extra tokens.
 3. The helper finds the matching Accessibility window (by frame, then by title) and walks its tree
    (up to 8,000 nodes or 200k characters). That includes content scrolled out of view.
    It sets `AXManualAccessibility` so Chrome and Electron apps expose their tree.
