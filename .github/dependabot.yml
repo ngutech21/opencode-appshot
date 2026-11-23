@@ -1,0 +1,30 @@
+version: 2
+
+updates:
+  # npm ecosystem covers pnpm too (reads pnpm-lock.yaml).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      opencode:
+        patterns: ["@opencode/*"]
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # effect must match the exact version @opencode/plugin pins; a separate
+      # bump installs a second copy and breaks the Ipc schemas. Update it by
+      # hand together with @opencode/plugin (check with `pnpm why effect`).
+      - dependency-name: effect
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
