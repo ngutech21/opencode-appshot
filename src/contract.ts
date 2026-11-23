@@ -22,9 +22,9 @@ export const Permissions = Schema.Struct({
 export type Permissions = typeof Permissions.Type
 
 export const Shot = Schema.Struct({
-  /** PNG of the window, inside the session's workspace. */
+  /** Absolute path of the window's PNG, in the temp folder. */
   imagePath: Schema.String,
-  /** Markdown file with the window's accessibility text, inside the workspace. */
+  /** Absolute path of a Markdown file with the window's accessibility text. */
   textPath: Schema.optional(Schema.String),
   /** The extracted text (possibly empty). */
   text: Schema.String,
@@ -39,7 +39,7 @@ export const Appshot = Ipc.define({
   methods: {
     listWindows: { output: Schema.Array(WindowEntry) },
     capture: {
-      input: Schema.Struct({ window: WindowEntry, directory: Schema.String }),
+      input: Schema.Struct({ window: WindowEntry }),
       output: Shot,
     },
     permissions: { output: Permissions },

@@ -101,12 +101,14 @@ function slug(s: string): string {
   )
 }
 
-export async function capture(win: WindowEntry, directory: string): Promise<Shot> {
+export async function capture(win: WindowEntry): Promise<Shot> {
   const path = await import("node:path")
   const fs = await import("node:fs/promises")
+  const os = await import("node:os")
 
-  // Composer file parts must be workspace paths, so captures live in the project.
-  const dir = path.join(directory, ".opencode", "appshots")
+  // Like Codex, keep captures out of the project: OpenCode copies the image into the
+  // message when it is sent, and macOS clears old files from the temp folder.
+  const dir = path.join(os.tmpdir(), "opencode-appshot")
   await fs.mkdir(dir, { recursive: true })
   const stamp = new Date().toISOString().replace(/[:.]/g, "-")
   const base = path.join(dir, `${stamp}-${slug(win.app)}`)
@@ -131,8 +133,8 @@ export async function capture(win: WindowEntry, directory: string): Promise<Shot
   }
 
   return {
-    imagePath: path.relative(directory, imagePath),
-    textPath: textPath ? path.relative(directory, textPath) : undefined,
+    imagePath,
+    textPath,
     text: text.length > MAX_INLINE_TEXT ? "" : text,
     truncated: result.truncated,
   }

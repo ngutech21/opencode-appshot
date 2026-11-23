@@ -15,7 +15,7 @@ text** of any other app's window to your next prompt.
 ```
 renderer (setup)                 main process (main)              appshot-helper (Swift)
 ComposerPill / /appshot  ──Ipc──▶  ctx.provide(Appshot)  ──spawn──▶  list | permissions | capture
-composer.attach(file/quote) ◀───  writes .opencode/appshots/   ◀── PNG via screencapture -l
+composer.attach(file/quote) ◀───  writes $TMPDIR/opencode-appshot/ ◀── PNG via screencapture -l
                                                                     text via AXUIElement tree
 ```
 
@@ -25,7 +25,8 @@ composer.attach(file/quote) ◀───  writes .opencode/appshots/   ◀──
 3. The helper finds the matching Accessibility window (by frame, then by title) and walks its tree
    (up to 8,000 nodes or 200k characters). That includes content scrolled out of view.
    It sets `AXManualAccessibility` so Chrome and Electron apps expose their tree.
-4. Files go to `<project>/.opencode/appshots/`, because composer file parts must be workspace paths.
+4. Files go to `$TMPDIR/opencode-appshot/`, like Codex's pasted images, so nothing lands in your project.
+   OpenCode copies the image into the message when it's sent, and macOS clears old temp files on its own.
    The PNG is always attached. If the text is short, it's added as a quote. If it's long, the `.md` file is attached instead.
 
 ## Build & install (on a Mac)
@@ -79,7 +80,7 @@ After granting Screen Recording, restart OpenCode.
 
 - The sent message shows no thumbnail for the capture. The image does reach the model, but OpenCode
   only draws thumbnails for files stored inline (`source.type: "inline"`, as a pasted image is).
-  `composer.attach` takes a workspace path, so the file is stored as a `file://` URI and gets no
+  `composer.attach` takes a file path, so the file is stored as a `file://` URI and gets no
   thumbnail. The plugin API has no way to attach an inline image yet; this needs an upstream change.
 - Electron apps such as VS Code expose little Accessibility text unless their screen-reader mode is on,
   so captures of them are often image-only.
@@ -88,7 +89,6 @@ After granting Screen Recording, restart OpenCode.
 - Captured text is untrusted content: it's attached as a *quote* so the model treats it as
   quoted material, but prompt-injection-style text in captured windows is still possible.
 - Window picker thumbnails using a pill `menu` (custom JSX popover) in place of plain `rows`.
-- Move captures to a cleanup-on-send location. Add `.opencode/appshots/` to your projects' `.gitignore` meanwhile.
 
 ## Upstream
 

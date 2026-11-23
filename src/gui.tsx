@@ -32,11 +32,10 @@ export default Plugin.define({
 
     async function shoot(win: WindowEntry) {
       const screen = ctx.screen.current()
-      const session = ctx.sessions.current()
-      if (!screen || !session) return
+      if (!screen || !ctx.sessions.current()) return
       setBusy(true)
       try {
-        const shot = await api.capture({ window: win, directory: session.directory })
+        const shot = await api.capture({ window: win })
         const composer = screen.composer
         composer.attach({ type: "file", path: shot.imagePath, preview: `${win.app} screenshot` })
         if (shot.text && composer.quotable()) {
@@ -125,7 +124,7 @@ export default Plugin.define({
     helper.init(ctx)
     ctx.provide(Appshot, {
       listWindows: () => helper.listWindows(process.pid),
-      capture: ({ window, directory }) => helper.capture(window, directory),
+      capture: ({ window }) => helper.capture(window),
       permissions: () => helper.permissions(false),
       requestPermissions: () => helper.permissions(true),
     })

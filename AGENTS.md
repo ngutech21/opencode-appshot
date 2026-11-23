@@ -33,7 +33,8 @@ Run `pnpm typecheck && pnpm build:gui` before every commit that touches `src/`.
   update it together with the SDK and verify with `pnpm why effect` (one version only).
 - **Node built-ins are imported lazily** (`await import("node:…")`) in `src/helper.ts`. The host evaluates
   the whole bundle in the renderer too, so top-level Node imports must not be added.
-- **Composer file parts must be workspace paths.** Captures go to `<project>/.opencode/appshots/`.
+- **Captures go to `$TMPDIR/opencode-appshot/`, never into the project.** `composer.attach` gets
+  absolute paths; OpenCode copies the image into the message when it's sent.
 - **Ipc ids must start with the plugin id**, which is the package name (`opencode-appshot`).
 - The GUI plugin API is **experimental**: check `node_modules/@opencode/plugin/dist/gui/*.d.ts` for the
   real shapes before using an API. Don't rely on memory.
