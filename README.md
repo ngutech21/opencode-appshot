@@ -34,19 +34,45 @@ composer.attach(file/quote) ◀───  writes $TMPDIR/opencode-appshot/ ◀�
    The PNG is always attached. The text is read only when asked for (`--no-text` skips the walk otherwise).
    If it's short, it's added as a quote. If it's long, the `.md` file is attached instead.
 
-## Build & install (on a Mac)
+## Install
+
+### From a release (recommended)
+
+Each [GitHub Release](https://github.com/ngutech21/opencode-appshot/releases) has a prebuilt
+`opencode-appshot-<version>.tgz` with the plugin bundle and the universal helper. It needs no
+`node_modules`, because OpenCode provides `effect`, `solid-js` and the plugin SDK itself.
+
+```sh
+VERSION=0.2.0   # pick a version from the releases page
+mkdir -p ~/.local/share/opencode-appshot
+cd ~/.local/share/opencode-appshot
+curl -fsSLO "https://github.com/ngutech21/opencode-appshot/releases/download/v$VERSION/opencode-appshot-$VERSION.tgz"
+curl -fsSLO "https://github.com/ngutech21/opencode-appshot/releases/download/v$VERSION/SHA256SUMS"
+shasum -a 256 -c SHA256SUMS
+tar -xzf "opencode-appshot-$VERSION.tgz" --strip-components 1   # the tarball's files sit under package/
+```
+
+Download with `curl` as shown. A browser marks the file as quarantined, and macOS may then refuse to
+run the unnotarized helper. If you used a browser anyway, run
+`xattr -dr com.apple.quarantine ~/.local/share/opencode-appshot`.
+
+To update, run the same steps with the new version.
+
+### From source
 
 ```sh
 pnpm install
 pnpm build             # universal Swift helper → bin/, plugin bundle → dist/
 ```
 
-Then add the plugin to `~/.config/opencode/opencode.json` (the desktop app only reads plugins from
-`opencode.json(c)`):
+### Enable the plugin
+
+Add the plugin folder to `~/.config/opencode/opencode.json` (the desktop app only reads plugins from
+`opencode.json(c)`). Use an absolute path, since `~` isn't expanded:
 
 ```jsonc
 {
-  "plugins": ["/absolute/path/to/opencode-appshot"]
+  "plugins": ["/Users/you/.local/share/opencode-appshot"]   // or your source checkout
 }
 ```
 
