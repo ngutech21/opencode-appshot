@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js"
 import { Command, ComposerPill, Plugin, type ComposerPillRow, type ComposerPillView } from "@opencode/plugin/gui"
+import { parseArgs, pickWindow, windowLabel as label } from "./command"
 import { Appshot, type Permissions, type WindowEntry } from "./contract"
 import * as helper from "./helper"
 
@@ -59,10 +60,6 @@ export default Plugin.define({
       }
     }
 
-    function label(win: WindowEntry) {
-      return win.title ? `${win.app} — ${win.title}` : win.app
-    }
-
     ctx.add(ComposerPill, {
       id: "appshot",
       show: (): ComposerPillView => {
@@ -118,13 +115,8 @@ export default Plugin.define({
       enabled: !!ctx.sessions.current(),
       run: async (input) => {
         await refresh()
-        // "--text" anywhere in the argument also attaches the window's text.
-        const raw = (input ?? "").trim()
-        const text = /(^|\s)--text(\s|$)/.test(raw)
-        const q = raw.replace(/(^|\s)--text(?=\s|$)/g, " ").trim().toLowerCase()
-        const list = windows()
-        // No argument: the front-most other window, i.e. the app you just came from.
-        const win = q ? list.find((w) => label(w).toLowerCase().includes(q)) : list[0]
+        const { query: q, text } = parseArgs(input)
+        const win = pickWindow(windows(), q)
         if (win) await shoot(win, text || withText())
         else setError(q ? `No window matches "${q}"` : "No other windows on screen")
       },
