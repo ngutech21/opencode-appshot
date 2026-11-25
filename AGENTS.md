@@ -12,7 +12,10 @@ GUI plugin that attaches a screenshot and the Accessibility text of any macOS wi
 | `src/helper.ts` | Main-process code that spawns the Swift helper and writes captures |
 | `native/appshot-helper/` | Swift CLI: `list`, `permissions`, `capture` (prints JSON) |
 | `scripts/build-helper.sh` | Builds the universal helper into `bin/` (macOS only) |
+| `scripts/smoke-test-helper.sh` | Checks the built helper's architectures and JSON output (macOS only) |
 | `.github/workflows/ci.yml` | Typecheck/bundle on Linux, build helper + pack on macOS |
+| `.github/workflows/release.yml` | release-please Release PR, then build on macOS and attach the `.tgz` to the GitHub Release |
+| `release-please-config.json`, `.release-please-manifest.json` | release-please settings and the current version |
 
 ## Commands
 
@@ -44,6 +47,19 @@ Run `pnpm typecheck && pnpm build:gui` before every commit that touches `src/`.
   branch. Dependabot updates the SHA and the comment together. Tool versions that an action
   downloads get pinned too, for example actionlint's `version:`.
 - CI runs actionlint, with shellcheck on `run:` blocks. Check workflows locally with `actionlint` before pushing.
+
+## Releases
+
+Releases are cut by [release-please](https://github.com/googleapis/release-please) from the commit
+history, so the commit types below decide the version and the changelog.
+
+- Don't edit `version` in `package.json`, `CHANGELOG.md` or `.release-please-manifest.json` by hand.
+  release-please updates them in its Release PR.
+- To release, merge the open `chore(master): release …` PR. That creates the tag and the GitHub Release,
+  and `release.yml` attaches the packed `.tgz` and `SHA256SUMS`.
+- Below 1.0, `feat!`/`BREAKING CHANGE` bumps the minor version and `feat`/`fix` bump the patch version.
+  Only `feat`, `fix`, `perf` and `revert` appear in the changelog.
+- To force a version, add a `Release-As: x.y.z` footer to a commit.
 
 ## Commits
 

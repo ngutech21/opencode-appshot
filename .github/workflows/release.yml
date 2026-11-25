@@ -1,0 +1,85 @@
+name: Release
+
+# On every push to master, release-please opens or updates a Release PR
+# (version bump in package.json + CHANGELOG.md). Merging that PR tags the
+# commit and creates the GitHub Release; the upload job then builds the
+# package on macOS and attaches the .tgz to it.
+
+on:
+  push:
+    branches: [master]
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release PR & tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
+        with:
+          # PRs opened with GITHUB_TOKEN don't trigger CI. Set this secret
+          # (GitHub App token or fine-grained PAT) to get checks on the
+          # Release PR; without it, the default token is used.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  upload:
+    name: Build & attach package
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: macos-15
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.release-please.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      # No dependency cache here: release builds start clean.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Check version matches tag
+        run: |
+          version="v$(node -p 'require("./package.json").version')"
+          if [ "$version" != "$TAG" ]; then
+            echo "package.json is $version but the tag is $TAG" >&2
+            exit 1
+          fi
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build
+
+      - name: Smoke-test helper
+        run: scripts/smoke-test-helper.sh
+
+      - name: Pack
+        run: |
+          mkdir -p out
+          pnpm pack --pack-destination out
+          tar -tzf out/*.tgz
+          (cd out && shasum -a 256 -- *.tgz > SHA256SUMS)
+
+      - name: Attach to the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" out/*.tgz out/SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber
