@@ -35,6 +35,8 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Check effect matches @opencode/plugin
+        run: scripts/check-effect.sh
       - run: pnpm typecheck
       - run: pnpm build:gui
 

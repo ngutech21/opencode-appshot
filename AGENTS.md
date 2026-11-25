@@ -12,6 +12,7 @@ GUI plugin that attaches a screenshot and the Accessibility text of any macOS wi
 | `src/helper.ts` | Main-process code that spawns the Swift helper and writes captures |
 | `native/appshot-helper/` | Swift CLI: `list`, `permissions`, `capture` (prints JSON) |
 | `scripts/build-helper.sh` | Builds the universal helper into `bin/` (macOS only) |
+| `scripts/check-effect.sh` | Fails unless exactly one `effect` is installed, the one `@opencode/plugin` depends on |
 | `scripts/smoke-test-helper.sh` | Checks the built helper's architectures and JSON output (macOS only) |
 | `.github/workflows/ci.yml` | Typecheck/bundle on Linux, build helper + pack on macOS |
 | `.github/workflows/release.yml` | release-please Release PR, then build on macOS and attach the `.tgz` to the GitHub Release |
@@ -33,7 +34,7 @@ Run `pnpm typecheck && pnpm build:gui` before every commit that touches `src/`.
 ## Rules that are easy to break
 
 - **`effect` is pinned to the exact version `@opencode/plugin` depends on.** Never bump it on its own;
-  update it together with the SDK and verify with `pnpm why effect` (one version only).
+  update it together with the SDK and verify with `scripts/check-effect.sh`, which CI also runs.
 - **Modules the host provides are optional `peerDependencies` plus `devDependencies`, never `dependencies`.**
   That covers `effect`, `solid-js` and `@opencode/plugin`. The bundle keeps them external, and
   OpenCode supplies them at runtime.
