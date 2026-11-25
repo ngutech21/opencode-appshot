@@ -34,6 +34,9 @@ Run `pnpm typecheck && pnpm build:gui` before every commit that touches `src/`.
 
 - **`effect` is pinned to the exact version `@opencode/plugin` depends on.** Never bump it on its own;
   update it together with the SDK and verify with `pnpm why effect` (one version only).
+- **Modules the host provides are optional `peerDependencies` plus `devDependencies`, never `dependencies`.**
+  That covers `effect`, `solid-js` and `@opencode/plugin`. The bundle keeps them external, and
+  OpenCode supplies them at runtime.
 - **Node built-ins are imported lazily** (`await import("node:…")`) in `src/helper.ts`. The host evaluates
   the whole bundle in the renderer too, so top-level Node imports must not be added.
 - **Captures go to `$TMPDIR/opencode-appshot/`, never into the project.** `composer.attach` gets
