@@ -23,7 +23,7 @@ jobs:
         with:
           version: 1.7.12 # pin the actionlint binary too, not just the action
 
-  # Fast and cheap: typecheck and bundle the GUI part on Linux.
+  # Fast and cheap: typecheck, test and bundle the GUI part on Linux.
   check:
     name: Typecheck & bundle
     runs-on: ubuntu-latest
@@ -36,6 +36,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      - run: pnpm test
       - run: pnpm build:gui
 
   # The Swift helper needs macOS + Xcode. macOS minutes cost more, so this job

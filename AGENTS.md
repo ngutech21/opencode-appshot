@@ -10,7 +10,9 @@ GUI plugin that attaches a screenshot and the Accessibility text of any macOS wi
 | `src/gui.tsx` | Plugin entry (`Plugin.define`): `setup` runs in every window (pill, `/appshot`), `main` runs in Electron's main process |
 | `src/contract.ts` | `Ipc` contract between window and main, with `effect` Schemas |
 | `src/helper.ts` | Main-process code that spawns the Swift helper and writes captures |
+| `src/command.ts` | Pure helpers for `/appshot`: argument parsing and window matching |
 | `native/appshot-helper/` | Swift CLI: `list`, `permissions`, `capture` (prints JSON) |
+| `test/` | Vitest tests; `test/fixtures/fake-helper.sh` stands in for the Swift helper |
 | `scripts/build-helper.sh` | Builds the universal helper into `bin/` (macOS only) |
 | `scripts/smoke-test-helper.sh` | Checks the built helper's architectures and JSON output (macOS only) |
 | `.github/workflows/ci.yml` | Typecheck/bundle on Linux, build helper + pack on macOS |
@@ -24,11 +26,13 @@ Use **pnpm** (version pinned in `package.json` → `packageManager`). Do not use
 ```sh
 pnpm install          # --frozen-lockfile in CI
 pnpm typecheck
+pnpm test             # Vitest, works on any OS
 pnpm build:gui        # works on any OS
 pnpm build            # helper + bundle, macOS only
 ```
 
-Run `pnpm typecheck && pnpm build:gui` before every commit that touches `src/`.
+Run `pnpm typecheck && pnpm test && pnpm build:gui` before every commit that touches `src/`.
+When you change the helper's JSON or arguments, update `test/helper.test.ts` and `test/contract.test.ts` too.
 
 ## Rules that are easy to break
 
@@ -41,7 +45,7 @@ Run `pnpm typecheck && pnpm build:gui` before every commit that touches `src/`.
 - **Ipc ids must start with the plugin id**, which is the package name (`opencode-appshot`).
 - The GUI plugin API is **experimental**: check `node_modules/@opencode/plugin/dist/gui/*.d.ts` for the
   real shapes before using an API. Don't rely on memory.
-- The helper's stdout is a JSON contract with `src/helper.ts`. Change both sides together.
+- The helper's stdout is a JSON contract with `src/helper.ts`. Change both sides together, and the tests with them.
 - **Pin every GitHub Action to a full commit SHA**, with the exact version as a trailing comment:
   `uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`. Never use a tag or
   branch. Dependabot updates the SHA and the comment together. Tool versions that an action
