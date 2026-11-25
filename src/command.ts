@@ -16,7 +16,8 @@ export interface AppshotArgs {
 export function parseArgs(input: string | undefined): AppshotArgs {
   const raw = (input ?? "").trim()
   const text = /(^|\s)--text(\s|$)/.test(raw)
-  const query = raw.replace(/(^|\s)--text(?=\s|$)/g, " ").trim().toLowerCase()
+  // Collapse the gap the flag leaves, so "google --text chrome" matches "Google Chrome".
+  const query = raw.replace(/(^|\s)--text(?=\s|$)/g, " ").replace(/\s+/g, " ").trim().toLowerCase()
   return { query, text }
 }
 
