@@ -184,17 +184,16 @@ settings:
 importers:
 
   .:
-    dependencies:
+    devDependencies:
       '@opencode/plugin':
         specifier: ^2.4.1
         version: 2.4.1(@opentelemetry/semantic-conventions@1.45.0)(redis@6.4.0(@opentelemetry/api@1.9.0))(solid-js@1.9.20)(vite-plugin-solid@2.11.17(solid-js@1.9.20)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)))(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2))
-      effect:
-        specifier: 4.1.0
-        version: 4.1.0
-    devDependencies:
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
+      effect:
+        specifier: 4.1.0
+        version: 4.1.0
       solid-js:
         specifier: ^1.9.20
         version: 1.9.20
